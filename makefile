@@ -2,14 +2,13 @@ build:
 	go build -o lambda_handler -v main.go
 
 zip: build
-	zip handler.zip lambda_handler.go
+	zip handler.zip lambda_handler
 
 deploy: zip  
-	aws lambda create-function \
+	aws lambda update-function-code \
 	  --region us-east-1 \
-      --function-name lambda-handler \
-      --memory 128 \
-      --role arn:aws:iam::account-id:role/execution_role \
-      --runtime go1.x \
+      --function-name  EKS-Create-ConfigMap \
       --zip-file fileb://${PWD}/handler.zip \
-      --handler lambda-handler
+
+clean: 
+	rm -f lambda_handler handler.zip
