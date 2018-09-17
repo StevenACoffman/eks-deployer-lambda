@@ -1,3 +1,29 @@
+# Serverless stuff
+.serverless
+*.log
+npm-debug.log
+pids
+*.pid
+*.seed
+dist
+lib-cov
+coverage
+.grunt
+.lock-wscript
+node_modules
+.idea
+.DS_Store
+.tmp
+.env
+env.js
+env.yml
+env.json
+admin.env
+tmp
+*.pyc
+*.swp
+*.swo
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -11,10 +37,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# lambda zip files
-*.zip
+# golang output binary directory
+bin
 
-# binaries
-lambda_handler
-eks_configmap_lambda
-
+# golang vendor (dependencies) directory
+vendor

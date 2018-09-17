@@ -1,0 +1,53 @@
+
+service: eks-deployer-lambda # NOTE: update this with your service name
+
+package:
+ exclude:
+   - ./**
+ include:
+   - ./bin/**
+
+frameworkVersion: ">=1.28.0 <2.0.0"
+
+provider:
+  region: us-east-1
+  stage: test
+  name: aws
+  runtime: go1.x
+  environment:
+    EKS_BEARER_TOKEN: ${ssm:/core/eks-deployer-lambda-default-kubernetes-bearer-token~true}
+    EKS_CLUSTER_NAME: 'test-c20n'
+  # iamRoleStatements are not used if role is specified, but this documents requirements
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action: 'ssm:GetParameters'
+      Resource:
+        - 'arn:aws:ssm:us-east-1:1111111:parameter/core/eks-deployer-lambda-default-kubernetes-bearer-token'
+    - Effect: 'Allow'
+      Action:
+        - 'eks:ListClusters'
+        - 'eks:DescribeCluster'
+      Resource:
+        - '*'
+    - Effect: 'Allow'
+      Action:
+        - 'iam:PassRole'
+      Resource:
+        - 'arn:aws:iam::1111111:role/AWS-CodePipeline-Service'
+  vpc:
+    VpcId: vpc-d111111
+    securityGroupIds:
+      ${file(config/${opt:stage,self:provider.stage}/vpc.js):security}
+
+    subnetIds:
+      ${file(config/${opt:stage,self:provider.stage}/vpc.js):subnets}
+  timeout: 10 # optional, default is 6
+  deploymentBucket: sequoia-short-lived
+
+functions:
+  eks-deployer-lambda:
+    handler: bin/eks-deployer-lambda
+    events:
+      - http:
+          path: eks-deployer-lambda
+          method: post

@@ -1,0 +1,17 @@
+{
+  "name": "eks-deployer-lambda",
+  "version": "1.0.0",
+  "description": "",
+  "author": "Steve Coffman <steve.coffman@ithaka.org>",
+  "license": "MIT",
+  "devDependencies": {
+    "serverless": "^1.31.0"
+  },
+  "scripts": {
+    "build": "rm -rf ./bin ./vendor Gopkg.lock && dep ensure -v && GOOS=linux go build -ldflags='-s -w' -o bin/eks-deployer-lambda eks-deployer-lambda/main.go",
+    "deploy": "serverless deploy --stage test",
+    "invoke": "serverless invoke -f eks-deployer-lambda --stage test --data '{\"appName\":\"dummy\",\"userName\":\"steve.coffman@ithaka.org\",\"image\":\"artifactory.acorn.cirrostratus.org/cypress/hello-world\"}'",
+    "deployfunc": "serverless deploy function -f eks-deployer-lambda",
+    "logs": "serverless logs -f eks-deployer-lambda"
+  }
+}

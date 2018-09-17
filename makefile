@@ -1,14 +1,11 @@
 build:
-	go build -o lambda_handler -v main.go
+	dep ensure -v
+	env GOOS=linux go build -ldflags="-s -w" -o bin/eks-deployer-lambda eks-deployer-lambda/main.go
 
-zip: build
-	zip handler.zip lambda_handler
+.PHONY: clean
+clean:
+	rm -rf ./bin ./vendor Gopkg.lock
 
-deploy: zip  
-	aws lambda update-function-code \
-	  --region us-east-1 \
-      --function-name  EKS-Create-ConfigMap \
-      --zip-file fileb://${PWD}/handler.zip \
-
-clean: 
-	rm -f lambda_handler handler.zip
+.PHONY: deploy
+deploy: clean build
+	sls deploy --verbose
