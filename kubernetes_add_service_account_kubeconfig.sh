@@ -7,7 +7,7 @@ set -o pipefail
 
 
 # Add user to k8s using service account, no RBAC (must create RBAC after this script)
-if [[ -z "$1" ]] || [[ -z "$2" ]]; then
+if [[ -z "$1" ]] || [[ -z "$2" ]] || [[ -z "$3" ]]; then
  echo "usage: $0 <service_account_name> <namespace>"
  exit 1
 fi
@@ -15,6 +15,7 @@ fi
 
 SERVICE_ACCOUNT_NAME=$1
 NAMESPACE="$2"
+CLUSTER_NAME="$3"
 KUBECFG_FILE_NAME="/tmp/kube/k8s-${SERVICE_ACCOUNT_NAME}-${NAMESPACE}-conf"
 TARGET_FOLDER="/tmp/kube"
 
@@ -60,12 +61,12 @@ set_kube_config_values() {
     echo -e "\\nSetting current context to: $context"
 
 
-    CLUSTER_NAME=$(kubectl config get-contexts "$context" | awk '{print $3}' | tail -n 1)
+    CURRENT_CLUSTER_NAME=$(kubectl config get-contexts "$context" | awk '{print $3}' | tail -n 1)
     echo "Cluster name: ${CLUSTER_NAME}"
 
 
     ENDPOINT=$(kubectl config view \
-    -o jsonpath="{.clusters[?(@.name == \"${CLUSTER_NAME}\")].cluster.server}")
+    -o jsonpath="{.clusters[?(@.name == \"${CURRENT_CLUSTER_NAME}\")].cluster.server}")
     echo "Endpoint: ${ENDPOINT}"
 
 
@@ -101,13 +102,13 @@ set_kube_config_values() {
 }
 
 set_clusteradmin_rolebinding() {
-    echo -n "Setting cluster rolebinding of cluser-admin for sa ${SERVICE_ACCOUNT_NAME} in ns ${NAMESPACE}"
+    echo -n "Setting cluster rolebinding of cluster-admin for sa ${SERVICE_ACCOUNT_NAME} in ns ${NAMESPACE}"
     kubectl create clusterrolebinding "${SERVICE_ACCOUNT_NAME}" --clusterrole cluster-admin --serviceaccount="${NAMESPACE}:${SERVICE_ACCOUNT_NAME}"
 }
 
 put_parameter_store() {
     echo "Setting parameterstore /core/${SERVICE_ACCOUNT_NAME}-${NAMESPACE}-${CLUSTER_NAME}-bearer-token"
-    aws ssm put-parameter --name '/core/'"${SERVICE_ACCOUNT_NAME}-${NAMESPACE}-${CLUSTER_NAME}"'-bearer-token' --value "${USER_TOKEN}" --type SecureString --region us-east-1
+    aws ssm put-parameter --name '/core/'"${SERVICE_ACCOUNT_NAME}-${NAMESPACE}-${CLUSTER_NAME}"'-bearer-token' --value "${USER_TOKEN}" --type SecureString --region us-east-1 --overwrite
 }
 
 clean_up() {
